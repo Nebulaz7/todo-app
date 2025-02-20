@@ -5,7 +5,7 @@
 
   color-scheme: light dark;
   color: #020202;
-  background-color: rgba(242, 231, 231, 0.87);
+  background-color: rgb(237, 233, 233);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -26,7 +26,10 @@
   border-top-left-radius: 10px;
   border-bottom-left-radius: 10px;
   border: none;
+  color: #322f2f;
+  background-color: #fff;
   outline: none;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
 }
 .header button  {
   padding: 20px 40px;
@@ -39,6 +42,11 @@
   cursor: pointer;
   outline: none;
   transition: background-color 0.3s;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+}
+
+.header button:hover {
+  background-color: rgba(40, 103, 238, 0.8);
 }
 
 .container {
@@ -47,24 +55,25 @@
   margin-top: 10px;
   margin-bottom: 10px;
   padding: 15px 30px;
-  background-color: #322f2f;
+  background-color: #fff;
   border: none;
   border-left: 2px solid rgba(40, 103, 238, 0.954);
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 .container p  {
   flex: 1;
   text-align: left;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #fff;
+  color: #322f2f;
 }
 
 .container span {
   flex: 1;
+  font-size: 1.8rem;
   text-align: right;
-  color: #fff;
+  color: #322f2f;
   cursor: pointer;
   text-decoration: none;
 }

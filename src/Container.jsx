@@ -9,7 +9,7 @@ const Container = ({ todo }) => {
               <p
                 onClick={(e) => {
                 e.target.style.textDecoration = e.target.style.textDecoration === 'line-through' ? 'none' : 'line-through';
-                e.target.style.color = e.target.style.color === 'grey' ? '#fff' : 'grey';
+                e.target.style.color = e.target.style.color === 'grey' ? '#322f2f' : 'grey';
                }}
                onDoubleClick={(e) => {
                  e.target.setAttribute('contenteditable', true);
@@ -23,7 +23,7 @@ const Container = ({ todo }) => {
               onClick={(e) => {
                 e.target.parentElement.style.display = 'none';
               }}
-              >*</span>
+              >x</span>
           </div>
         ))}
         </>

@@ -31,11 +31,11 @@ const App = () => {
          type="text"
         value={item}
         onChange={(e) => setItem(e.target.value)}
+        placeholder='Add a to-do item'
           />
           <button
           onClick={handleTodo}
           onKeyDown={handleKeyPress}
-          placeholder='Add a to-do item'
           >Add+</button>
      </div>
    
