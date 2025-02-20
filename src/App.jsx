@@ -1,17 +1,23 @@
-import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState } from 'react'
 import './App.css'
+
+import Container from './Container';
 
 const App = () => {
 
-  const [ item, setItem ] = useState('something');
+  const [ item, setItem ] = useState('');
   const [ todo, setTodo ] = useState([]);
 
   const handleTodo = () => {
-    if(item.trim = '') {
-      setItem('');
+    if(item.trim() !== '') {
       setTodo([...todo, item]);
+      setItem('');
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleAddTodo();
     }
   };
 
@@ -20,7 +26,7 @@ const App = () => {
     <div>
       <h1>To-do List App</h1>
     
-      <div>
+      <div className='header'>
          <input 
          type="text"
         value={item}
@@ -28,15 +34,13 @@ const App = () => {
           />
           <button
           onClick={handleTodo}
+          onKeyDown={handleKeyPress}
+          placeholder='Add a to-do item'
           >Add+</button>
      </div>
-  
+   
+      <Container todo={todo} />
 
-    <div className='cointainer'>
-         {
-          <p key={index}>{}</p>
-         }
-    </div>
     </div>
   )
 };
