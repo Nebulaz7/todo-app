@@ -1,48 +1,44 @@
-import { useState } from 'react'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
 
-import Container from './Container';
+import Container from "./components/Container.jsx";
 
 const App = () => {
-
-  const [ item, setItem ] = useState('');
-  const [ todo, setTodo ] = useState([]);
+  const [item, setItem] = useState("");
+  const [todo, setTodo] = useState([]);
 
   const handleTodo = () => {
-    if(item.trim() !== '') {
+    if (item.trim() !== "") {
       setTodo([...todo, item]);
-      setItem('');
+      setItem("");
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleAddTodo();
     }
   };
 
-
   return (
     <div>
       <h1>To-do List App</h1>
-    
-      <div className='header'>
-         <input 
-         type="text"
-        value={item}
-        onChange={(e) => setItem(e.target.value)}
-        placeholder='Add a to-do item'
-          />
-          <button
-          onClick={handleTodo}
-          onKeyDown={handleKeyPress}
-          >Add+</button>
-     </div>
-   
-      <Container todo={todo} />
 
+      <div className="header">
+        <input
+          type="text"
+          value={item}
+          onChange={(e) => setItem(e.target.value)}
+          placeholder="Add a to-do item"
+        />
+        <button onClick={handleTodo} onKeyDown={handleKeyPress}>
+          Add+
+        </button>
+      </div>
+
+      <Container todo={todo} />
     </div>
-  )
+  );
 };
 
-export default App
+export default App;
