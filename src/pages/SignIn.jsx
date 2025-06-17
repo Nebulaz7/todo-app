@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./css/SignIn.css";
 import supabase from "../config/SupabaseClient";
 import { useNavigate } from "react-router-dom";
@@ -8,27 +8,55 @@ const SignIn = () => {
   const [fetchError, setFetchError] = useState("");
   const navigate = useNavigate();
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    // Add Google sign-in logic here
-    console.log("Google sign-in clicked");
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: "http://localhost:5173/", // Adjust this URL based on your app's routing
-      },
+  // Check if user is already authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        // Redirect to dashboard with user ID
+        navigate(`/dashboard/${session.user.id}`);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        // Redirect to dashboard with user ID after successful sign-in
+        navigate(`/dashboard/${session.user.id}`);
+      }
     });
 
-    if (error) {
-      console.log(error);
-      setFetchError("Failed to sign in with Google. Please try again.");
-      setIsLoading(false);
-      return;
-    }
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
-    if (data) {
-      console.log(data);
-      setFetchError(null);
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setFetchError("");
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/signin`, // Redirect back to signin page after OAuth
+        },
+      });
+
+      if (error) {
+        console.error("Sign in error:", error);
+        setFetchError("Failed to sign in with Google. Please try again.");
+        setIsLoading(false);
+      }
+
+      // Note: Don't set loading to false here as the redirect will happen
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      setFetchError("An unexpected error occurred. Please try again.");
       setIsLoading(false);
     }
   };
