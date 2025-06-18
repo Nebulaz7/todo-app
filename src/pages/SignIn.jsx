@@ -8,15 +8,48 @@ const SignIn = () => {
   const [fetchError, setFetchError] = useState("");
   const navigate = useNavigate();
 
+  // Test Supabase connection on component mount
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        console.log("Testing Supabase connection...");
+        console.log("Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
+        console.log(
+          "Supabase Key exists:",
+          !!import.meta.env.VITE_SUPABASE_ANON_KEY
+        );
+
+        // Test basic connection
+        const { data, error } = await supabase
+          .from("todos")
+          .select("count", { count: "exact", head: true });
+        console.log("Connection test result:", { data, error });
+      } catch (error) {
+        console.error("Connection test failed:", error);
+      }
+    };
+
+    testConnection();
+  }, []);
   // Check if user is already authenticated
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Redirect to dashboard with user ID
-        navigate(`/dashboard/${session.user.id}`);
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        console.log("Current session:", session);
+        console.log("Session error:", error);
+
+        if (session?.user) {
+          console.log("User found, redirecting to dashboard:", session.user.id);
+          // Redirect to dashboard with user ID
+          navigate(`/dashboard/${session.user.id}`);
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error);
       }
     };
 
@@ -26,7 +59,12 @@ const SignIn = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state change:", event, session);
       if (event === "SIGNED_IN" && session?.user) {
+        console.log(
+          "Sign in detected, redirecting to dashboard:",
+          session.user.id
+        );
         // Redirect to dashboard with user ID after successful sign-in
         navigate(`/dashboard/${session.user.id}`);
       }
@@ -34,29 +72,32 @@ const SignIn = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
-
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setFetchError("");
+
+    console.log("Starting Google sign in...");
 
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/signin`, // Redirect back to signin page after OAuth
+          redirectTo: `${window.location.origin}/signin`, // Redirect back to signin to handle auth state
         },
       });
 
+      console.log("OAuth response:", { data, error });
+
       if (error) {
         console.error("Sign in error:", error);
-        setFetchError("Failed to sign in with Google. Please try again.");
+        setFetchError(`Failed to sign in with Google: ${error.message}`);
         setIsLoading(false);
       }
 
       // Note: Don't set loading to false here as the redirect will happen
     } catch (error) {
       console.error("Unexpected error:", error);
-      setFetchError("An unexpected error occurred. Please try again.");
+      setFetchError(`An unexpected error occurred: ${error.message}`);
       setIsLoading(false);
     }
   };
