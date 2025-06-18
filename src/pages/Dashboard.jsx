@@ -17,7 +17,11 @@ const Dashboard = () => {
   const [activeFilter, setActiveFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
-
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem("darkMode");
+    return saved ? JSON.parse(saved) : false;
+  });
   // Form state
   const [formData, setFormData] = useState({
     title: "",
@@ -26,6 +30,9 @@ const Dashboard = () => {
     due_date: "",
   });
 
+  // Form validation
+  const [formErrors, setFormErrors] = useState({});
+
   // Stats
   const [stats, setStats] = useState({
     total: 0,
@@ -33,6 +40,15 @@ const Dashboard = () => {
     pending: 0,
     overdue: 0,
   });
+
+  // Theme effect
+  useEffect(() => {
+    localStorage.setItem("darkMode", JSON.stringify(darkMode));
+    document.documentElement.setAttribute(
+      "data-theme",
+      darkMode ? "dark" : "light"
+    );
+  }, [darkMode]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -148,17 +164,43 @@ const Dashboard = () => {
     setFilteredTodos(filtered);
   }, [todos, activeFilter, searchTerm]);
 
+  // Form validation
+  const validateForm = () => {
+    const errors = {};
+
+    if (!formData.title.trim()) {
+      errors.title = "Title is required";
+    } else if (formData.title.length > 100) {
+      errors.title = "Title must be less than 100 characters";
+    }
+
+    if (formData.description && formData.description.length > 500) {
+      errors.description = "Description must be less than 500 characters";
+    }
+
+    if (
+      formData.due_date &&
+      new Date(formData.due_date) < new Date().setHours(0, 0, 0, 0)
+    ) {
+      errors.due_date = "Due date cannot be in the past";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Add or update todo
   const handleSaveTodo = async (e) => {
     e.preventDefault();
 
-    if (!formData.title.trim()) return;
+    if (!validateForm()) return;
+
     try {
       const todoData = {
         ...formData,
         user_id: user.id,
         due_date: formData.due_date || null,
-        completed: editingTodo ? editingTodo.completed : false, // Explicitly set completed field
+        completed: editingTodo ? editingTodo.completed : false,
       };
 
       if (editingTodo) {
@@ -173,7 +215,6 @@ const Dashboard = () => {
 
         if (error) throw error;
       }
-
       await fetchTodos(user.id);
       setShowModal(false);
       setEditingTodo(null);
@@ -183,6 +224,7 @@ const Dashboard = () => {
         priority: "medium",
         due_date: "",
       });
+      setFormErrors({});
     } catch (error) {
       console.error("Error saving todo:", error);
       setError("Failed to save todo");
@@ -230,6 +272,7 @@ const Dashboard = () => {
       priority: todo.priority,
       due_date: todo.due_date ? todo.due_date.split("T")[0] : "",
     });
+    setFormErrors({});
     setShowModal(true);
   };
 
@@ -263,41 +306,57 @@ const Dashboard = () => {
     if (hour < 17) return "Good Afternoon";
     return "Good Evening";
   };
+  const getPriorityLabel = (priority) => {
+    const labels = {
+      low: "Low",
+      medium: "Medium",
+      high: "High",
+    };
+    return labels[priority] || "Medium";
+  };
+
+  const getPriorityClass = (priority) => {
+    return priority || "medium";
+  };
+
+  const getPriorityValue = (sliderValue) => {
+    if (sliderValue <= 2) return "low";
+    if (sliderValue >= 4) return "high";
+    return "medium";
+  };
+
+  const getSliderValue = (priority) => {
+    const values = {
+      low: 2,
+      medium: 3,
+      high: 4,
+    };
+    return values[priority] || 3;
+  };
 
   if (loading) {
     return (
-      <div
-        className="dashboard"
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <div className="loading-spinner"></div>
+      <div className="dashboard loading">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div
-        className="dashboard"
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <h2>Error</h2>
+      <div className="dashboard error">
+        <div className="error-container">
+          <span className="material-icons error-icon">error</span>
+          <h2>Oops! Something went wrong</h2>
           <p>{error}</p>
           <button
             onClick={() => navigate("/signin")}
             className="btn btn-primary"
           >
+            <span className="material-icons">login</span>
             Go to Sign In
           </button>
         </div>
@@ -308,34 +367,61 @@ const Dashboard = () => {
   if (!user) return null;
 
   return (
-    <div className="dashboard">
+    <div
+      className={`dashboard ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}
+      data-theme={darkMode ? "dark" : "light"}
+    >
       {/* Header */}
       <header className="dashboard-header">
         <div className="header-content">
-          <div className="user-info">
-            {user.user_metadata?.avatar_url ? (
-              <img
-                src={user.user_metadata.avatar_url}
-                alt="Profile"
-                className="user-avatar"
-              />
-            ) : (
-              <div className="user-avatar-placeholder">
-                {user.user_metadata?.full_name?.charAt(0) ||
-                  user.email.charAt(0)}
+          <div className="header-left">
+            <button
+              className="sidebar-toggle"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <span className="material-icons">
+                {sidebarCollapsed ? "menu" : "menu_open"}
+              </span>
+            </button>
+            <div className="user-info">
+              {user.user_metadata?.avatar_url ? (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt="Profile"
+                  className="user-avatar"
+                />
+              ) : (
+                <div className="user-avatar-placeholder">
+                  <span className="material-icons">person</span>
+                </div>
+              )}
+              <div className="user-details">
+                <h2>
+                  {getGreeting()},{" "}
+                  {user.user_metadata?.full_name?.split(" ")[0] || "User"}!
+                </h2>
+                <p>Ready to be productive today?</p>
               </div>
-            )}
-            <div className="user-details">
-              <h2>
-                {getGreeting()},{" "}
-                {user.user_metadata?.full_name?.split(" ")[0] || "User"}!
-              </h2>
-              <p>Ready to be productive today?</p>
             </div>
           </div>
           <div className="header-actions">
-            <button onClick={handleSignOut} className="signout-btn">
-              Sign Out
+            <button
+              className="theme-toggle"
+              onClick={() => setDarkMode(!darkMode)}
+              title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              <span className="material-icons">
+                {darkMode ? "light_mode" : "dark_mode"}
+              </span>
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="signout-btn"
+              title="Sign out"
+            >
+              <span className="material-icons">logout</span>
+              <span className="btn-text">Sign Out</span>
             </button>
           </div>
         </div>
@@ -345,166 +431,128 @@ const Dashboard = () => {
       <main className="dashboard-main">
         {/* Stats Grid */}
         <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-header">
-              <div className="stat-icon total">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M9 11H7v8h2v-8zm4-4h-2v12h2V7zm4-2h-2v14h2V5z" />
-                </svg>
-              </div>
+          <div className="stat-card total">
+            <div className="stat-icon">
+              <span className="material-icons">task_alt</span>
             </div>
-            <p className="stat-number">{stats.total}</p>
-            <p className="stat-label">Total Tasks</p>
+            <div className="stat-content">
+              <p className="stat-number">{stats.total}</p>
+              <p className="stat-label">Total Tasks</p>
+            </div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-header">
-              <div className="stat-icon completed">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                </svg>
-              </div>
+          <div className="stat-card completed">
+            <div className="stat-icon">
+              <span className="material-icons">check_circle</span>
             </div>
-            <p className="stat-number">{stats.completed}</p>
-            <p className="stat-label">Completed</p>
+            <div className="stat-content">
+              <p className="stat-number">{stats.completed}</p>
+              <p className="stat-label">Completed</p>
+            </div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-header">
-              <div className="stat-icon pending">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                </svg>
-              </div>
+          <div className="stat-card pending">
+            <div className="stat-icon">
+              <span className="material-icons">schedule</span>
             </div>
-            <p className="stat-number">{stats.pending}</p>
-            <p className="stat-label">Pending</p>
+            <div className="stat-content">
+              <p className="stat-number">{stats.pending}</p>
+              <p className="stat-label">Pending</p>
+            </div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-header">
-              <div className="stat-icon overdue">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" />
-                  <path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
-                </svg>
-              </div>
+          <div className="stat-card overdue">
+            <div className="stat-icon">
+              <span className="material-icons">warning</span>
             </div>
-            <p className="stat-number">{stats.overdue}</p>
-            <p className="stat-label">Overdue</p>
+            <div className="stat-content">
+              <p className="stat-number">{stats.overdue}</p>
+              <p className="stat-label">Overdue</p>
+            </div>
           </div>
         </div>
 
         {/* Content Grid */}
-        <div className="content-grid">
+        <div className="content-layout">
           {/* Sidebar */}
-          <aside className="sidebar">
-            <h3>Filters</h3>
-            <ul className="nav-list">
-              <li className="nav-item">
+          <aside className={`sidebar ${sidebarCollapsed ? "collapsed" : ""}`}>
+            <div className="sidebar-content">
+              <nav className="nav-list">
                 <button
-                  className={`nav-link ${
+                  className={`nav-item ${
                     activeFilter === "all" ? "active" : ""
                   }`}
                   onClick={() => setActiveFilter("all")}
+                  title="All Tasks"
                 >
-                  <svg
-                    className="nav-icon"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
-                  </svg>
-                  All Tasks
+                  <span className="material-icons nav-icon">dashboard</span>
+                  <span className="nav-label">All Tasks</span>
+                  {stats.total > 0 && (
+                    <span className="nav-badge">{stats.total}</span>
+                  )}
                 </button>
-              </li>
-              <li className="nav-item">
+
                 <button
-                  className={`nav-link ${
+                  className={`nav-item ${
                     activeFilter === "upcoming" ? "active" : ""
                   }`}
                   onClick={() => setActiveFilter("upcoming")}
+                  title="Upcoming Tasks"
                 >
-                  <svg
-                    className="nav-icon"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                  </svg>
-                  Upcoming
+                  <span className="material-icons nav-icon">upcoming</span>
+                  <span className="nav-label">Upcoming</span>
+                  {stats.pending > 0 && (
+                    <span className="nav-badge">{stats.pending}</span>
+                  )}
                 </button>
-              </li>
-              <li className="nav-item">
+
                 <button
-                  className={`nav-link ${
+                  className={`nav-item ${
                     activeFilter === "completed" ? "active" : ""
                   }`}
                   onClick={() => setActiveFilter("completed")}
+                  title="Completed Tasks"
                 >
-                  <svg
-                    className="nav-icon"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                  </svg>
-                  Completed
+                  <span className="material-icons nav-icon">check_circle</span>
+                  <span className="nav-label">Completed</span>
+                  {stats.completed > 0 && (
+                    <span className="nav-badge">{stats.completed}</span>
+                  )}
                 </button>
-              </li>
-              <li className="nav-item">
+
                 <button
-                  className={`nav-link ${
+                  className={`nav-item ${
                     activeFilter === "overdue" ? "active" : ""
                   }`}
                   onClick={() => setActiveFilter("overdue")}
+                  title="Overdue Tasks"
                 >
-                  <svg
-                    className="nav-icon"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" />
-                  </svg>
-                  Overdue
+                  <span className="material-icons nav-icon">schedule</span>
+                  <span className="nav-label">Overdue</span>
+                  {stats.overdue > 0 && (
+                    <span className="nav-badge danger">{stats.overdue}</span>
+                  )}
                 </button>
-              </li>
-            </ul>
+              </nav>
+            </div>
           </aside>
 
           {/* Main Content */}
           <div className="main-content">
             {/* Search and Add Section */}
-            <div className="search-add-section">
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search tasks..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="content-header">
+              <div className="search-container">
+                <span className="material-icons search-icon">search</span>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search tasks..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>{" "}
               <button
-                className="add-todo-btn"
+                className="add-task-btn"
                 onClick={() => {
                   setEditingTodo(null);
                   setFormData({
@@ -513,113 +561,117 @@ const Dashboard = () => {
                     priority: "medium",
                     due_date: "",
                   });
+                  setFormErrors({});
                   setShowModal(true);
                 }}
+                title="Add new task"
               >
-                + Add Task
+                <span className="material-icons">add</span>
+                <span className="btn-text">Add Task</span>
               </button>
             </div>
 
-            {/* Todo List */}
-            <div className="todo-list">
+            {/* Task List */}
+            <div className="task-list">
               {filteredTodos.length === 0 ? (
                 <div className="empty-state">
-                  <svg
-                    className="empty-state-icon"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M9 11H7v8h2v-8zm4-4h-2v12h2V7zm4-2h-2v14h2V5z" />
-                  </svg>
+                  <span className="material-icons empty-icon">task_alt</span>
                   <h3>No tasks found</h3>
                   <p>
                     {activeFilter === "all"
                       ? "Start by adding your first task!"
                       : `No ${activeFilter} tasks at the moment.`}
                   </p>
+                  {activeFilter === "all" && (
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => {
+                        setEditingTodo(null);
+                        setFormData({
+                          title: "",
+                          description: "",
+                          priority: "medium",
+                          due_date: "",
+                        });
+                        setFormErrors({});
+                        setShowModal(true);
+                      }}
+                    >
+                      <span className="material-icons">add</span>
+                      Add Your First Task
+                    </button>
+                  )}
                 </div>
               ) : (
                 filteredTodos.map((todo) => (
                   <div
                     key={todo.id}
-                    className={`todo-item ${todo.completed ? "completed" : ""}`}
+                    className={`task-item ${
+                      todo.completed ? "completed" : ""
+                    } ${
+                      isOverdue(todo.due_date) && !todo.completed
+                        ? "overdue"
+                        : ""
+                    }`}
                   >
-                    <div className="todo-header">
-                      <div
-                        className={`todo-checkbox ${
+                    <div className="task-content">
+                      <button
+                        className={`task-checkbox ${
                           todo.completed ? "checked" : ""
                         }`}
                         onClick={() => toggleTodo(todo.id, todo.completed)}
+                        title={
+                          todo.completed
+                            ? "Mark as incomplete"
+                            : "Mark as complete"
+                        }
                       >
-                        {todo.completed && (
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="white"
-                          >
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="todo-content">
-                        <h4
-                          className={`todo-title ${
-                            todo.completed ? "completed" : ""
-                          }`}
-                        >
-                          {todo.title}
-                        </h4>
+                        <span className="material-icons">
+                          {todo.completed
+                            ? "check_circle"
+                            : "radio_button_unchecked"}
+                        </span>
+                      </button>
+
+                      <div className="task-details">
+                        <h4 className="task-title">{todo.title}</h4>
                         {todo.description && (
-                          <p className="todo-description">{todo.description}</p>
+                          <p className="task-description">{todo.description}</p>
                         )}
-                        <div className="todo-meta">
-                          <span className={`priority-badge ${todo.priority}`}>
-                            {todo.priority}
+                        <div className="task-meta">
+                          <span
+                            className={`priority-badge ${getPriorityClass(
+                              todo.priority
+                            )}`}
+                          >
+                            <span className="material-icons">flag</span>
+                            {getPriorityLabel(todo.priority)}
                           </span>
                           {todo.due_date && (
-                            <span
-                              className={`due-date ${
-                                isOverdue(todo.due_date) && !todo.completed
-                                  ? "overdue"
-                                  : ""
-                              }`}
-                            >
-                              📅 {formatDate(todo.due_date)}
+                            <span className="due-date">
+                              <span className="material-icons">event</span>
+                              {formatDate(todo.due_date)}
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="todo-actions">
-                        <button
-                          className="action-btn edit"
-                          onClick={() => editTodo(todo)}
-                          title="Edit"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                          >
-                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                          </svg>
-                        </button>
-                        <button
-                          className="action-btn delete"
-                          onClick={() => deleteTodo(todo.id)}
-                          title="Delete"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                          >
-                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                          </svg>
-                        </button>
-                      </div>
+                    </div>
+
+                    <div className="task-actions">
+                      <button
+                        className="action-btn edit"
+                        onClick={() => editTodo(todo)}
+                        title="Edit task"
+                      >
+                        <span className="material-icons">edit</span>
+                      </button>
+                      <button
+                        className="action-btn delete"
+                        onClick={() => deleteTodo(todo.id)}
+                        title="Delete task"
+                      >
+                        <span className="material-icons">delete</span>
+                      </button>
                     </div>
                   </div>
                 ))
@@ -635,70 +687,138 @@ const Dashboard = () => {
           className="modal-overlay"
           onClick={(e) => e.target === e.currentTarget && setShowModal(false)}
         >
-          <div className="modal">
-            <h3>{editingTodo ? "Edit Task" : "Add New Task"}</h3>
-            <form onSubmit={handleSaveTodo}>
+          <div
+            className="modal"
+            role="dialog"
+            aria-labelledby="modal-title"
+            aria-modal="true"
+          >
+            <div className="modal-header">
+              <h3 id="modal-title">
+                <span className="material-icons">
+                  {editingTodo ? "edit" : "add_task"}
+                </span>
+                {editingTodo ? "Edit Task" : "Add New Task"}
+              </h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowModal(false)}
+                title="Close modal"
+              >
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTodo} className="modal-form">
               <div className="form-group">
-                <label className="form-label">Title *</label>
+                <label className="form-label" htmlFor="task-title">
+                  Title <span className="required">*</span>
+                </label>
                 <input
+                  id="task-title"
                   type="text"
-                  className="form-input"
+                  className={`form-input ${formErrors.title ? "error" : ""}`}
                   value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, title: e.target.value });
+                    if (formErrors.title) {
+                      setFormErrors({ ...formErrors, title: null });
+                    }
+                  }}
+                  placeholder="Enter task title..."
+                  maxLength="100"
                   required
                 />
+                {formErrors.title && (
+                  <span className="error-message">{formErrors.title}</span>
+                )}
               </div>
-
               <div className="form-group">
-                <label className="form-label">Description</label>
+                <label className="form-label" htmlFor="task-description">
+                  Description
+                </label>
                 <textarea
-                  className="form-textarea"
+                  id="task-description"
+                  className={`form-textarea ${
+                    formErrors.description ? "error" : ""
+                  }`}
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, description: e.target.value });
+                    if (formErrors.description) {
+                      setFormErrors({ ...formErrors, description: null });
+                    }
+                  }}
                   placeholder="Add a description..."
+                  maxLength="500"
+                  rows="3"
                 />
-              </div>
-
+                {formErrors.description && (
+                  <span className="error-message">
+                    {formErrors.description}
+                  </span>
+                )}
+              </div>{" "}
               <div className="form-group">
-                <label className="form-label">Priority</label>
-                <select
-                  className="form-select"
-                  value={formData.priority}
-                  onChange={(e) =>
-                    setFormData({ ...formData, priority: e.target.value })
-                  }
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
+                <label className="form-label" htmlFor="task-priority">
+                  Priority: {getPriorityLabel(formData.priority)}
+                </label>
+                <div className="priority-slider-container">
+                  <input
+                    id="task-priority"
+                    type="range"
+                    className="priority-slider"
+                    min="1"
+                    max="5"
+                    value={getSliderValue(formData.priority)}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        priority: getPriorityValue(parseInt(e.target.value)),
+                      })
+                    }
+                  />
+                  <div className="priority-labels">
+                    <span>Low</span>
+                    <span>Medium</span>
+                    <span>High</span>
+                  </div>
+                </div>
               </div>
-
               <div className="form-group">
-                <label className="form-label">Due Date</label>
+                <label className="form-label" htmlFor="task-due-date">
+                  Due Date
+                </label>
                 <input
+                  id="task-due-date"
                   type="date"
-                  className="form-input"
+                  className={`form-input ${formErrors.due_date ? "error" : ""}`}
                   value={formData.due_date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, due_date: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, due_date: e.target.value });
+                    if (formErrors.due_date) {
+                      setFormErrors({ ...formErrors, due_date: null });
+                    }
+                  }}
+                  min={new Date().toISOString().split("T")[0]}
                 />
+                {formErrors.due_date && (
+                  <span className="error-message">{formErrors.due_date}</span>
+                )}
               </div>
-
               <div className="modal-actions">
                 <button
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowModal(false)}
                 >
+                  <span className="material-icons">close</span>
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
+                  <span className="material-icons">
+                    {editingTodo ? "save" : "add"}
+                  </span>
                   {editingTodo ? "Update" : "Add"} Task
                 </button>
               </div>
