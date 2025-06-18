@@ -1116,6 +1116,9 @@ body {
   .modal-actions {
     flex-direction: column-reverse;
   }
+  .sidebar-toggle {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1153,6 +1156,9 @@ body {
   .nav-item {
     min-width: auto;
     justify-content: flex-start;
+  }
+  .sidebar-toggle {
+    display: none;
   }
 }
 
