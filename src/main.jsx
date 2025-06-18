@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import SignIn from "./pages/SignIn.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import NotFoundPage from "./pages/NotFoundPage.jsx";
 
 // Component to handle /dashboard redirect
 const DashboardRedirect = () => {
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
   { path: "/signin", element: <SignIn /> },
   { path: "/dashboard", element: <DashboardRedirect /> }, // Handle /dashboard without ID
   { path: "/dashboard/:id", element: <Dashboard /> },
+  { path: "*", element: <NotFoundPage /> },
 ]);
 
 createRoot(document.getElementById("root")).render(

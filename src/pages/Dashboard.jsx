@@ -809,13 +809,13 @@ const Dashboard = () => {
               <div className="modal-actions">
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-cancel-add-task"
                   onClick={() => setShowModal(false)}
                 >
                   <span className="material-icons">close</span>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="btn btn-add-task">
                   <span className="material-icons">
                     {editingTodo ? "save" : "add"}
                   </span>
