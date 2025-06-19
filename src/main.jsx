@@ -10,6 +10,7 @@ import {
 import SignIn from "./pages/SignIn.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
+import AuthCallback from "./pages/AuthCallback.jsx";
 
 // Component to handle /dashboard redirect
 const DashboardRedirect = () => {
@@ -21,6 +22,7 @@ const DashboardRedirect = () => {
 const router = createBrowserRouter([
   { path: "/", element: <App /> },
   { path: "/signin", element: <SignIn /> },
+  { path: "/auth/callback", element: <AuthCallback /> },
   { path: "/dashboard", element: <DashboardRedirect /> }, // Handle /dashboard without ID
   { path: "/dashboard/:id", element: <Dashboard /> },
   { path: "*", element: <NotFoundPage /> },

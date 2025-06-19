@@ -30,11 +30,47 @@ const SignIn = () => {
     };
 
     testConnection();
-  }, []);
-  // Check if user is already authenticated
+  }, []); // Check if user is already authenticated and handle OAuth callback
   useEffect(() => {
-    const checkAuth = async () => {
+    const handleAuthCallback = async () => {
       try {
+        // Check for OAuth callback parameters in URL
+        const urlParams = new URLSearchParams(
+          window.location.hash.substring(1)
+        );
+        const accessToken = urlParams.get("access_token");
+        if (accessToken) {
+          console.log("OAuth callback detected, processing...");
+          setIsLoading(true);
+
+          // Clean the URL by removing the hash parameters
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
+
+          // Let Supabase handle the OAuth callback
+          const { data, error } = await supabase.auth.getSession();
+
+          if (error) {
+            console.error("Error processing OAuth callback:", error);
+            setFetchError("Failed to process sign-in. Please try again.");
+            setIsLoading(false);
+            return;
+          }
+
+          if (data.session?.user) {
+            console.log(
+              "OAuth successful, redirecting to dashboard:",
+              data.session.user.id
+            );
+            navigate(`/dashboard/${data.session.user.id}`);
+            return;
+          }
+        }
+
+        // Regular auth check
         const {
           data: { session },
           error,
@@ -45,15 +81,17 @@ const SignIn = () => {
 
         if (session?.user) {
           console.log("User found, redirecting to dashboard:", session.user.id);
-          // Redirect to dashboard with user ID
           navigate(`/dashboard/${session.user.id}`);
+        } else {
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Error checking auth:", error);
+        setIsLoading(false);
       }
     };
 
-    checkAuth();
+    handleAuthCallback();
 
     // Listen for auth state changes
     const {
@@ -65,8 +103,9 @@ const SignIn = () => {
           "Sign in detected, redirecting to dashboard:",
           session.user.id
         );
-        // Redirect to dashboard with user ID after successful sign-in
         navigate(`/dashboard/${session.user.id}`);
+      } else if (event === "SIGNED_OUT") {
+        setIsLoading(false);
       }
     });
 
@@ -82,7 +121,7 @@ const SignIn = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/signin`, // Redirect back to signin to handle auth state
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
