@@ -1,0 +1,355 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+}
+
+.signin-page {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+  padding: 2rem;
+}
+
+/* Animated Background - Stars */
+.stars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 3s infinite alternate;
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Cosmic dust particles */
+.cosmic-dust {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: drift 20s infinite linear;
+  pointer-events: none;
+}
+
+.cosmic-dust:nth-child(1) {
+  top: 0%;
+  left: 25%;
+  animation-delay: 0s;
+}
+.cosmic-dust:nth-child(2) {
+  top: 0%;
+  left: 50%;
+  animation-delay: 5s;
+}
+.cosmic-dust:nth-child(3) {
+  top: 0%;
+  left: 75%;
+  animation-delay: 10s;
+}
+.cosmic-dust:nth-child(4) {
+  top: 0%;
+  left: 0%;
+  animation-delay: 15s;
+}
+.cosmic-dust:nth-child(5) {
+  top: 0%;
+  left: 100%;
+  animation-delay: 3s;
+}
+
+@keyframes drift {
+  0% {
+    transform: translateY(-10px) translateX(0px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) translateX(50px);
+    opacity: 0;
+  }
+}
+
+/* Sign In Card */
+.signin-card {
+  position: relative;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  max-width: 450px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: cardFadeIn 1s ease-out;
+}
+
+@keyframes cardFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Greeting Section */
+.greeting-section {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.greeting-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 0.8rem;
+  background: linear-gradient(45deg, #1a1a2e, #00d2d3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.greeting-subtitle {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Sign In Form */
+.signin-form {
+  margin-bottom: 2rem;
+}
+
+.google-signin-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 1rem 1.5rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: "Poppins", sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.google-signin-button:hover {
+  border-color: #00d2d3;
+  box-shadow: 0 8px 25px rgba(0, 210, 211, 0.15);
+  transform: translateY(-2px);
+}
+
+.google-signin-button:active {
+  transform: translateY(0);
+}
+
+.google-signin-button.loading {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.error-message {
+  color: #ff4757;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Footer */
+.signin-footer {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 1.5rem;
+}
+
+.footer-text {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #555;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.feature-icon {
+  width: 18px;
+  height: 18px;
+  fill: #00d2d3;
+  flex-shrink: 0;
+}
+
+/* Loading Animation */
+.google-signin-button.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e0e0e0;
+  border-top: 2px solid #00d2d3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .signin-page {
+    padding: 1rem;
+  }
+
+  .signin-card {
+    padding: 2rem 1.5rem;
+    max-width: 100%;
+  }
+
+  .greeting-title {
+    font-size: 1.8rem;
+  }
+
+  .greeting-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .google-signin-button {
+    padding: 0.9rem 1.2rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .signin-card {
+    padding: 1.5rem 1rem;
+    border-radius: 15px;
+  }
+
+  .greeting-title {
+    font-size: 1.6rem;
+  }
+
+  .features-list {
+    gap: 0.6rem;
+  }
+
+  .feature-item {
+    font-size: 0.85rem;
+  }
+}
+
+/* Dark theme support (optional) */
+@media (prefers-color-scheme: dark) {
+  .signin-card {
+    background: rgba(26, 26, 46, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .greeting-title {
+    color: #ffffff;
+    background: linear-gradient(45deg, #ffffff, #00d2d3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .greeting-subtitle {
+    color: #b8b8b8;
+  }
+
+  .google-signin-button {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+  }
+
+  .google-signin-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #00d2d3;
+  }
+
+  .footer-text {
+    color: #b8b8b8;
+  }
+
+  .feature-item {
+    color: #d0d0d0;
+  }
+
+  .signin-footer {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+}
