@@ -35,10 +35,11 @@ const SignIn = () => {
     const handleAuthCallback = async () => {
       try {
         // Check for OAuth callback parameters in URL
-        const urlParams = new URLSearchParams(
+        const hashParams = new URLSearchParams(
           window.location.hash.substring(1)
         );
-        const accessToken = urlParams.get("access_token");
+        const accessToken = hashParams.get("access_token");
+
         if (accessToken) {
           console.log("OAuth callback detected, processing...");
           setIsLoading(true);
@@ -50,8 +51,14 @@ const SignIn = () => {
             window.location.pathname
           );
 
-          // Let Supabase handle the OAuth callback
+          // Wait a moment for Supabase to process the session
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Get the session after OAuth
           const { data, error } = await supabase.auth.getSession();
+
+          console.log("OAuth session data:", data);
+          console.log("OAuth session error:", error);
 
           if (error) {
             console.error("Error processing OAuth callback:", error);
@@ -67,23 +74,31 @@ const SignIn = () => {
             );
             navigate(`/dashboard/${data.session.user.id}`);
             return;
+          } else {
+            console.log(
+              "No session found after OAuth, trying auth state change listener..."
+            );
+            // Don't set loading to false, let the auth state change handle it
           }
-        }
-
-        // Regular auth check
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-
-        console.log("Current session:", session);
-        console.log("Session error:", error);
-
-        if (session?.user) {
-          console.log("User found, redirecting to dashboard:", session.user.id);
-          navigate(`/dashboard/${session.user.id}`);
         } else {
-          setIsLoading(false);
+          // Regular auth check for existing sessions
+          const {
+            data: { session },
+            error,
+          } = await supabase.auth.getSession();
+
+          console.log("Current session:", session);
+          console.log("Session error:", error);
+
+          if (session?.user) {
+            console.log(
+              "User found, redirecting to dashboard:",
+              session.user.id
+            );
+            navigate(`/dashboard/${session.user.id}`);
+          } else {
+            setIsLoading(false);
+          }
         }
       } catch (error) {
         console.error("Error checking auth:", error);
@@ -96,16 +111,23 @@ const SignIn = () => {
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state change:", event, session);
+
       if (event === "SIGNED_IN" && session?.user) {
         console.log(
           "Sign in detected, redirecting to dashboard:",
           session.user.id
         );
-        navigate(`/dashboard/${session.user.id}`);
+        // Small delay to ensure everything is ready
+        setTimeout(() => {
+          navigate(`/dashboard/${session.user.id}`);
+        }, 500);
       } else if (event === "SIGNED_OUT") {
         setIsLoading(false);
+      } else if (event === "TOKEN_REFRESHED" && session?.user) {
+        console.log("Token refreshed, user still signed in");
+        // User is still authenticated after token refresh
       }
     });
 
@@ -147,7 +169,6 @@ const SignIn = () => {
     if (hour < 17) return "Good Afternoon!";
     return "Good Evening!";
   };
-
   return (
     <div className="signin-page">
       <div className="signin-card">
@@ -187,9 +208,17 @@ const SignIn = () => {
                 />
               </svg>
             )}
-            {isLoading ? "Signing you in..." : "Continue with Google"}
+            {isLoading ? "Processing sign-in..." : "Continue with Google"}
           </button>
           {fetchError && <p className="error-message">{fetchError}</p>}
+
+          {/* Debug info in development */}
+          {import.meta.env.DEV && (
+            <div style={{ fontSize: "12px", color: "#666", marginTop: "10px" }}>
+              <p>Debug: {isLoading ? "Loading..." : "Ready"}</p>
+              <p>URL Hash: {window.location.hash ? "Present" : "None"}</p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
