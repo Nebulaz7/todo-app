@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./css/SignIn.css";
 import supabase from "../config/SupabaseClient";
 import { useNavigate } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react";
 
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -145,6 +146,7 @@ const SignIn = () => {
           </div>
         </div>
       </div>
+      <Analytics />
     </div>
   );
 };

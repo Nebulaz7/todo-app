@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./App.css";
 import supabase from "./config/SupabaseClient.jsx";
+import { Analytics } from "@vercel/analytics/react";
 
 const App = () => {
   const navigate = useNavigate();
@@ -152,6 +153,7 @@ const App = () => {
           Get Started
         </button>
       </div>
+      <Analytics />
     </div>
   );
 };
