@@ -32,73 +32,48 @@ const SignIn = () => {
     testConnection();
   }, []); // Check if user is already authenticated and handle OAuth callback
   useEffect(() => {
-    const handleAuthCallback = async () => {
+    const handleAuth = async () => {
       try {
-        // Check for OAuth callback parameters in URL
+        // Check if we're returning from OAuth (has hash parameters)
         const hashParams = new URLSearchParams(
           window.location.hash.substring(1)
         );
         const accessToken = hashParams.get("access_token");
 
         if (accessToken) {
-          console.log("OAuth callback detected, processing...");
+          console.log(
+            "OAuth callback detected, cleaning URL and waiting for auth state change..."
+          );
           setIsLoading(true);
 
-          // Clean the URL by removing the hash parameters
+          // Clean the URL immediately - Supabase will handle the tokens automatically
           window.history.replaceState(
             {},
             document.title,
             window.location.pathname
           );
 
-          // Wait a moment for Supabase to process the session
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          // Don't manually process the session, let Supabase handle it
+          return;
+        }
 
-          // Get the session after OAuth
-          const { data, error } = await supabase.auth.getSession();
+        // Regular auth check for existing sessions (non-OAuth)
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-          console.log("OAuth session data:", data);
-          console.log("OAuth session error:", error);
+        console.log("Current session:", session);
+        console.log("Session error:", error);
 
-          if (error) {
-            console.error("Error processing OAuth callback:", error);
-            setFetchError("Failed to process sign-in. Please try again.");
-            setIsLoading(false);
-            return;
-          }
-
-          if (data.session?.user) {
-            console.log(
-              "OAuth successful, redirecting to dashboard:",
-              data.session.user.id
-            );
-            navigate(`/dashboard/${data.session.user.id}`);
-            return;
-          } else {
-            console.log(
-              "No session found after OAuth, trying auth state change listener..."
-            );
-            // Don't set loading to false, let the auth state change handle it
-          }
+        if (session?.user) {
+          console.log(
+            "Existing user found, redirecting to dashboard:",
+            session.user.id
+          );
+          navigate(`/dashboard/${session.user.id}`);
         } else {
-          // Regular auth check for existing sessions
-          const {
-            data: { session },
-            error,
-          } = await supabase.auth.getSession();
-
-          console.log("Current session:", session);
-          console.log("Session error:", error);
-
-          if (session?.user) {
-            console.log(
-              "User found, redirecting to dashboard:",
-              session.user.id
-            );
-            navigate(`/dashboard/${session.user.id}`);
-          } else {
-            setIsLoading(false);
-          }
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Error checking auth:", error);
@@ -106,9 +81,9 @@ const SignIn = () => {
       }
     };
 
-    handleAuthCallback();
+    handleAuth();
 
-    // Listen for auth state changes
+    // Let Supabase's auth state listener handle OAuth processing
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -116,18 +91,12 @@ const SignIn = () => {
 
       if (event === "SIGNED_IN" && session?.user) {
         console.log(
-          "Sign in detected, redirecting to dashboard:",
+          "Sign in successful! Redirecting to dashboard:",
           session.user.id
         );
-        // Small delay to ensure everything is ready
-        setTimeout(() => {
-          navigate(`/dashboard/${session.user.id}`);
-        }, 500);
+        navigate(`/dashboard/${session.user.id}`);
       } else if (event === "SIGNED_OUT") {
         setIsLoading(false);
-      } else if (event === "TOKEN_REFRESHED" && session?.user) {
-        console.log("Token refreshed, user still signed in");
-        // User is still authenticated after token refresh
       }
     });
 
